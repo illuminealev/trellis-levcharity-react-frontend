@@ -1,34 +1,36 @@
 ---
 - name: Build LevCharity React Frontend package
   block:
-    - name: Debug project path
-      ansible.builtin.debug:
-        msg:
-          - "Project current path: {{ project_current_path }}"
-          - "Looking for lc at: {{ project_root }}/current/web/lc"
-
     - name: Check if lc directory exists
       ansible.builtin.stat:
         path: "{{ project_root }}/current/web/lc"
       register: lc_directory
+
+    - name: Check if npm is installed
+      ansible.builtin.command: which npm
+      register: npm_check
+      failed_when: npm_check.rc != 0
+      changed_when: false
+      when: lc_directory.stat.exists
 
     - name: Install Node.js and npm
       ansible.builtin.package:
         name: nodejs
         state: present
       become: yes
-      when: lc_directory.stat.exists
+      when: lc_directory.stat.exists and npm_check.rc == 0
 
     - name: Check if package.json exists
       ansible.builtin.stat:
         path: "{{ project_root }}/current/web/lc/package.json"
       register: package_json
+      when: lc_directory.stat.exists and npm_check.rc == 0
 
     - name: Install npm dependencies
       ansible.builtin.shell: npm install
       args:
         chdir: "{{ project_root }}/current/web/lc"
-      when: package_json.stat.exists
+      when: package_json.stat.exists and npm_check.rc == 0
       environment:
         NODE_ENV: "{{ wordpress_env | default('production') }}"
 
@@ -36,7 +38,7 @@
       ansible.builtin.shell: npm run build
       args:
         chdir: "{{ project_root }}/current/web/lc"
-      when: package_json.stat.exists
+      when: package_json.stat.exists and npm_check.rc == 0
 
     - name: Set proper ownership for lc directory
       ansible.builtin.file:
