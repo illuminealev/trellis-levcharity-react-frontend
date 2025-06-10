@@ -33,15 +33,6 @@
         chdir: "{{ project_root }}/current/web/lc"
       when: package_json.stat.exists and npm_check.rc == 0
 
-    - name: Set proper ownership for lc directory
-      ansible.builtin.file:
-        path: "{{ project_root }}/current/web/lc"
-        owner: "{{ web_user }}"
-        group: "{{ web_group }}"
-        recurse: yes
-      become: yes
-      when: lc_directory.stat.exists or package_json.stat.exists
-
     - name: Clean up node_modules directory
       ansible.builtin.file:
         path: "{{ project_root }}/current/web/lc/node_modules"
@@ -55,8 +46,8 @@
       ansible.builtin.debug:
         msg: "Failed to setup LevCharity React Frontend package. Check logs for details."
 
-#    - name: Clean up on failure
-#      ansible.builtin.file:
-#        path: "{{ project_root }}/current/web/lc"
-#        state: absent
-#      ignore_errors: yes
+    - name: Clean up on failure
+      ansible.builtin.file:
+        path: "{{ project_root }}/current/web/lc"
+        state: absent
+      ignore_errors: yes
