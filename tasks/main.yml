@@ -55,8 +55,8 @@
       ansible.builtin.debug:
         msg: "Failed to setup LevCharity React Frontend package. Check logs for details."
 
-    - name: Clean up on failure
-      ansible.builtin.file:
-        path: "{{ project_root }}/current/web/lc"
-        state: absent
-      ignore_errors: yes
+#    - name: Clean up on failure
+#      ansible.builtin.file:
+#        path: "{{ project_root }}/current/web/lc"
+#        state: absent
+#      ignore_errors: yes
