@@ -41,7 +41,7 @@
       ansible.builtin.shell: npm run build
       args:
         chdir: "{{ project_local_path }}/web/lc"
-      environment: "{{ env_vars | default({}) }}"
+      environment: {}
       when: package_json.stat.exists
 
     - name: Set proper ownership for lc directory
