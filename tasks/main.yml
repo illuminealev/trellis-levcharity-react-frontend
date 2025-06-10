@@ -1,16 +1,16 @@
 ---
 - name: Build LevCharity React Frontend package
   block:
+    - name: Debug project path
+      ansible.builtin.debug:
+        msg:
+          - "project_local_path: {{ project_local_path }}"
+          - "Looking for lc at: {{ project_local_path }}/web/lc"
+
     - name: Check if lc directory exists
       ansible.builtin.stat:
         path: "{{ project_local_path }}/web/lc"
       register: lc_directory
-
-    - name: Install Node.js repository
-      ansible.builtin.shell: |
-        curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-      become: yes
-      when: lc_directory.stat.exists
 
     - name: Install Node.js and npm
       ansible.builtin.package:
