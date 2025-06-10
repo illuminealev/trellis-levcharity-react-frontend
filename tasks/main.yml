@@ -42,6 +42,14 @@
       become: yes
       when: lc_directory.stat.exists or package_json.stat.exists
 
+    - name: Clean up node_modules directory
+      ansible.builtin.file:
+        path: "{{ project_root }}/current/web/lc/node_modules"
+        state: absent
+      become: yes
+      when: lc_directory.stat.exists and npm_check.rc == 0
+      ignore_errors: yes
+
   rescue:
     - name: Display error message
       ansible.builtin.debug:
