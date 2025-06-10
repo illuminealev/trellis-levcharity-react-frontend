@@ -19,23 +19,23 @@
       environment:
         NODE_ENV: "{{ wordpress_env | default('production') }}"
 
-    - name: Load environment variables from .env file
-      ansible.builtin.slurp:
-        src: "{{ project_local_path }}/.env"
-      register: env_file
-      ignore_errors: yes
+#    - name: Load environment variables from .env file
+#      ansible.builtin.slurp:
+#        src: "{{ project_local_path }}/.env"
+#      register: env_file
+#      ignore_errors: yes
 
-    - name: Parse environment variables
-      ansible.builtin.set_fact:
-        env_vars: "{{ env_vars | default({}) | combine({item.split('=')[0]: item.split('=')[1:]|join('=')}) }}"
-      loop: "{{ (env_file.content | b64decode).split('\n') }}"
-      when:
-        - env_file is succeeded
-        - item != ''
-        - not item.startswith('#')
-        - '=' in item
-      vars:
-        env_vars: {}
+#    - name: Parse environment variables
+#      ansible.builtin.set_fact:
+#        env_vars: "{{ env_vars | default({}) | combine({item.split('=')[0]: item.split('=')[1:]|join('=')}) }}"
+#      loop: "{{ (env_file.content | b64decode).split('\n') }}"
+#      when:
+#        - env_file is succeeded
+#        - item != ''
+#        - not item.startswith('#')
+#        - '=' in item
+#      vars:
+#        env_vars: {}
 
     - name: Build frontend assets
       ansible.builtin.shell: npm run build
