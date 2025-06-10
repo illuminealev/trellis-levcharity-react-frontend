@@ -1,6 +1,15 @@
 ---
 - name: Build LevCharity React Frontend package
   block:
+    - name: Ensure npm cache directory exists
+      ansible.builtin.file:
+        path: "{{ project_root }}/shared/.npm-cache"
+        state: directory
+        owner: "{{ web_user }}"
+        group: "{{ web_group }}"
+        mode: '0755'
+      become: yes
+
     - name: Check if lc directory exists
       ansible.builtin.stat:
         path: "{{ project_root }}/current/web/lc"
@@ -19,10 +28,18 @@
       register: package_json
       when: lc_directory.stat.exists and npm_check.rc == 0
 
-    - name: Install npm dependencies
-      ansible.builtin.shell: npm install
+    - name: Configure npm cache location
+      ansible.builtin.shell: npm config set cache {{ project_root }}/shared/.npm-cache
+      become_user: "{{ web_user }}"
+      become: yes
+      when: package_json.stat.exists and npm_check.rc == 0
+
+    - name: Install npm dependencies with cache
+      ansible.builtin.shell: npm ci --cache {{ project_root }}/shared/.npm-cache
       args:
         chdir: "{{ project_root }}/current/web/lc"
+      become_user: "{{ web_user }}"
+      become: yes
       when: package_json.stat.exists and npm_check.rc == 0
       environment:
         NODE_ENV: "{{ wordpress_env | default('production') }}"
@@ -31,26 +48,12 @@
       ansible.builtin.shell: npm run build
       args:
         chdir: "{{ project_root }}/current/web/lc"
+      become_user: "{{ web_user }}"
+      become: yes
       when: package_json.stat.exists and npm_check.rc == 0
 
     - name: Clean up node_modules directory
       ansible.builtin.file:
         path: "{{ project_root }}/current/web/lc/node_modules"
         state: absent
-      become_user: "{{ web_user }}"
-      become: yes
       when: lc_directory.stat.exists and npm_check.rc == 0
-      ignore_errors: yes
-
-  rescue:
-    - name: Display error message
-      ansible.builtin.debug:
-        msg: "Failed to setup LevCharity React Frontend package. Check logs for details."
-
-    - name: Clean up on failure
-      ansible.builtin.file:
-        path: "{{ project_root }}/current/web/lc"
-        state: absent
-      become_user: "{{ web_user }}"
-      become: yes
-      ignore_errors: yes
