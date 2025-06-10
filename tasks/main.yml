@@ -37,6 +37,7 @@
       ansible.builtin.file:
         path: "{{ project_root }}/current/web/lc/node_modules"
         state: absent
+      become_user: "{{ web_user }}"
       become: yes
       when: lc_directory.stat.exists and npm_check.rc == 0
       ignore_errors: yes
@@ -50,4 +51,6 @@
       ansible.builtin.file:
         path: "{{ project_root }}/current/web/lc"
         state: absent
+      become_user: "{{ web_user }}"
+      become: yes
       ignore_errors: yes
