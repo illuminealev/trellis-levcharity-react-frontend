@@ -1,5 +1,5 @@
 ---
-- name: Setup LevCharity React Frontend package
+- name: Build LevCharity React Frontend package
   block:
     - name: Check if lc directory exists
       ansible.builtin.stat:
