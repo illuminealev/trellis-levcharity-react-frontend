@@ -4,12 +4,12 @@
     - name: Debug project path
       ansible.builtin.debug:
         msg:
-          - "project_local_path: {{ project_local_path }}"
-          - "Looking for lc at: {{ project_local_path }}/web/lc"
+          - "Project current path: {{ project_current_path }}"
+          - "Looking for lc at: {{ project_root }}/current/web/lc"
 
     - name: Check if lc directory exists
       ansible.builtin.stat:
-        path: "{{ project_local_path }}/web/lc"
+        path: "{{ project_root }}/current/web/lc"
       register: lc_directory
 
     - name: Install Node.js and npm
@@ -21,13 +21,13 @@
 
     - name: Check if package.json exists
       ansible.builtin.stat:
-        path: "{{ project_local_path }}/web/lc/package.json"
+        path: "{{ project_root }}/current/web/lc/package.json"
       register: package_json
 
     - name: Install npm dependencies
       ansible.builtin.shell: npm install
       args:
-        chdir: "{{ project_local_path }}/web/lc"
+        chdir: "{{ project_root }}/current/web/lc"
       when: package_json.stat.exists
       environment:
         NODE_ENV: "{{ wordpress_env | default('production') }}"
@@ -35,12 +35,12 @@
     - name: Build frontend assets
       ansible.builtin.shell: npm run build
       args:
-        chdir: "{{ project_local_path }}/web/lc"
+        chdir: "{{ project_root }}/current/web/lc"
       when: package_json.stat.exists
 
     - name: Set proper ownership for lc directory
       ansible.builtin.file:
-        path: "{{ project_local_path }}/web/lc"
+        path: "{{ project_root }}/current/web/lc"
         owner: "{{ web_user }}"
         group: "{{ web_group }}"
         recurse: yes
@@ -54,6 +54,6 @@
 
     - name: Clean up on failure
       ansible.builtin.file:
-        path: "{{ project_local_path }}/web/lc"
+        path: "{{ project_root }}/current/web/lc"
         state: absent
       ignore_errors: yes
