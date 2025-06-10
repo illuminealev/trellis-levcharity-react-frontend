@@ -1,0 +1,116 @@
+---
+- name: Setup LevCharity React Frontend package
+  block:
+    - name: Create temporary directory for package download
+      ansible.builtin.tempfile:
+        state: directory
+        suffix: _levcharity_download
+      register: temp_dir
+
+    - name: Set up Composer home directory
+      ansible.builtin.file:
+        path: "{{ temp_dir.path }}/.composer"
+        state: directory
+        mode: '0700'
+
+    - name: Copy auth.json to Composer home directory
+      ansible.builtin.copy:
+        src: "{{ project_local_path }}/auth.json"
+        dest: "{{ temp_dir.path }}/.composer/auth.json"
+        mode: '0600'
+
+    - name: Download LevCharity React Frontend package
+      ansible.builtin.shell: |
+        cd {{ temp_dir.path }}
+        composer create-project illuminealev/levcharity-react-frontend package_temp --no-dev --prefer-dist --repository="https://levcharity.repo.packagist.com"
+      environment:
+        COMPOSER_ALLOW_SUPERUSER: "1"
+        COMPOSER_HOME: "{{ temp_dir.path }}/.composer"
+      args:
+        creates: "{{ temp_dir.path }}/package_temp"
+
+    - name: Ensure web directory exists
+      ansible.builtin.file:
+        path: "{{ project_local_path }}/web"
+        state: directory
+        mode: '0755'
+
+    - name: Remove existing lc directory if it exists
+      ansible.builtin.file:
+        path: "{{ project_local_path }}/web/lc"
+        state: absent
+
+    - name: Copy package to web directory and rename to lc
+      ansible.builtin.copy:
+        src: "{{ temp_dir.path }}/package_temp/"
+        dest: "{{ project_local_path }}/web/lc/"
+        remote_src: yes
+        mode: preserve
+
+    - name: Check if package.json exists
+      ansible.builtin.stat:
+        path: "{{ project_local_path }}/web/lc/package.json"
+      register: package_json
+
+    - name: Install npm dependencies
+      ansible.builtin.shell: npm install
+      args:
+        chdir: "{{ project_local_path }}/web/lc"
+      when: package_json.stat.exists
+      environment:
+        NODE_ENV: "{{ wordpress_env | default('production') }}"
+
+    - name: Load environment variables from .env file
+      ansible.builtin.slurp:
+        src: "{{ project_local_path }}/.env"
+      register: env_file
+      ignore_errors: yes
+
+    - name: Parse environment variables
+      ansible.builtin.set_fact:
+        env_vars: "{{ env_vars | default({}) | combine({item.split('=')[0]: item.split('=')[1:]|join('=')}) }}"
+      loop: "{{ (env_file.content | b64decode).split('\n') }}"
+      when:
+        - env_file is succeeded
+        - item != ''
+        - not item.startswith('#')
+        - '=' in item
+      vars:
+        env_vars: {}
+
+    - name: Build frontend assets
+      ansible.builtin.shell: npm run build
+      args:
+        chdir: "{{ project_local_path }}/web/lc"
+      environment: "{{ env_vars | default({}) }}"
+      when: package_json.stat.exists
+
+    - name: Set proper ownership for lc directory
+      ansible.builtin.file:
+        path: "{{ project_local_path }}/web/lc"
+        owner: "{{ web_user }}"
+        group: "{{ web_group }}"
+        recurse: yes
+      become: yes
+
+  rescue:
+    - name: Display error message
+      ansible.builtin.debug:
+        msg: "Failed to setup LevCharity React Frontend package. Check logs for details."
+
+    - name: Clean up on failure
+      ansible.builtin.file:
+        path: "{{ project_local_path }}/web/lc"
+        state: absent
+      ignore_errors: yes
+
+  always:
+    - name: Clean up temporary directory
+      ansible.builtin.file:
+        path: "{{ temp_dir.path }}"
+        state: absent
+      when: temp_dir is defined
+
+  vars:
+    web_user: "{{ ansible_user }}"
+    web_group: "{{ ansible_user }}"
