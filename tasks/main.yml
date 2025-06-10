@@ -13,13 +13,6 @@
       changed_when: false
       when: lc_directory.stat.exists
 
-    - name: Install Node.js and npm
-      ansible.builtin.package:
-        name: nodejs
-        state: present
-      become: yes
-      when: lc_directory.stat.exists and npm_check.rc == 0
-
     - name: Check if package.json exists
       ansible.builtin.stat:
         path: "{{ project_root }}/current/web/lc/package.json"
