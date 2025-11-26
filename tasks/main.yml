@@ -13,9 +13,9 @@
       register: lc_directory
 
     - name: Check if npm is installed
-      ansible.builtin.command: which npm
+      ansible.builtin.command: /usr/bin/npm --version
       register: npm_check
-      failed_when: npm_check.rc != 0
+      failed_when: false
       changed_when: false
       when: lc_directory.stat.exists
 
@@ -26,22 +26,27 @@
       when: lc_directory.stat.exists and npm_check.rc == 0
 
     - name: Configure npm cache location
-      ansible.builtin.shell: npm config set cache {{ project_root }}/shared/.npm-cache
+      ansible.builtin.shell: /usr/bin/npm config set cache {{ project_root }}/shared/.npm-cache
       when: package_json.stat.exists and npm_check.rc == 0
+      environment:
+        PATH: "/usr/bin:/usr/local/bin:{{ ansible_env.PATH }}"
 
     - name: Install npm dependencies with cache
-      ansible.builtin.shell: npm ci --cache {{ project_root }}/shared/.npm-cache
+      ansible.builtin.shell: /usr/bin/npm ci --cache {{ project_root }}/shared/.npm-cache
       args:
         chdir: "{{ project_root }}/current/web/lc"
       when: package_json.stat.exists and npm_check.rc == 0
       environment:
+        PATH: "/usr/bin:/usr/local/bin:{{ ansible_env.PATH }}"
         NODE_ENV: "{{ wordpress_env | default('production') }}"
 
     - name: Build frontend assets
-      ansible.builtin.shell: npm run build
+      ansible.builtin.shell: /usr/bin/npm run build
       args:
         chdir: "{{ project_root }}/current/web/lc"
       when: package_json.stat.exists and npm_check.rc == 0
+      environment:
+        PATH: "/usr/bin:/usr/local/bin:{{ ansible_env.PATH }}"
 
     - name: Clean up node_modules directory
       ansible.builtin.file:
