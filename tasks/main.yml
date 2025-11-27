@@ -1,55 +1,67 @@
----
-- name: Build LevCharity React Frontend package
-  block:
-    - name: Ensure npm cache directory exists
-      ansible.builtin.file:
-        path: "{{ project_root }}/shared/.npm-cache"
-        state: directory
-        mode: '0755'
+# Build LevCharity React Frontend locally and copy to server
+- name: Check if lc directory exists
+  stat:
+    path: "{{ project_local_path }}/web/lc"
+  delegate_to: localhost
+  register: lc_directory
 
-    - name: Check if lc directory exists
-      ansible.builtin.stat:
-        path: "{{ project_root }}/current/web/lc"
-      register: lc_directory
+- name: Create .env file with all site environment variables
+  copy:
+    content: |
+      {% for key, value in site_env.items() %}
+      {{ key | upper }}="{{ value }}"
+      {% endfor %}
+    dest: "{{ project_local_path }}/web/lc/.env"
+  delegate_to: localhost
+  when: lc_directory.stat.exists
 
-    - name: Check if npm is installed
-      ansible.builtin.command: /usr/bin/npm --version
-      register: npm_check
-      failed_when: false
-      changed_when: false
-      when: lc_directory.stat.exists
+- name: Install npm dependencies
+  command: npm i
+  delegate_to: localhost
+  args:
+    chdir: "{{ project_local_path }}/web/lc"
+  when: lc_directory.stat.exists
 
-    - name: Check if package.json exists
-      ansible.builtin.stat:
-        path: "{{ project_root }}/current/web/lc/package.json"
-      register: package_json
-      when: lc_directory.stat.exists and npm_check.rc == 0
+- name: Build React frontend
+  command: npm run build
+  delegate_to: localhost
+  args:
+    chdir: "{{ project_local_path }}/web/lc"
+  environment:
+    NODE_ENV: production
+  when: lc_directory.stat.exists
 
-    - name: Configure npm cache location
-      ansible.builtin.shell: /usr/bin/npm config set cache {{ project_root }}/shared/.npm-cache
-      when: package_json.stat.exists and npm_check.rc == 0
-      environment:
-        PATH: "/usr/bin:/usr/local/bin:{{ ansible_env.PATH }}"
+- name: Remove .env file after build
+  file:
+    path: "{{ project_local_path }}/web/lc/.env"
+    state: absent
+  delegate_to: localhost
+  when: lc_directory.stat.exists
 
-    - name: Install npm dependencies with cache
-      ansible.builtin.shell: /usr/bin/npm ci --cache {{ project_root }}/shared/.npm-cache
-      args:
-        chdir: "{{ project_root }}/current/web/lc"
-      when: package_json.stat.exists and npm_check.rc == 0
-      environment:
-        PATH: "/usr/bin:/usr/local/bin:{{ ansible_env.PATH }}"
-        NODE_ENV: "{{ wordpress_env | default('production') }}"
+- name: Check if checkout directory exists
+  stat:
+    path: "{{ project_local_path }}/web/lc/checkout"
+  delegate_to: localhost
+  register: checkout_directory
+  when: lc_directory.stat.exists
 
-    - name: Build frontend assets
-      ansible.builtin.shell: /usr/bin/npm run build
-      args:
-        chdir: "{{ project_root }}/current/web/lc"
-      when: package_json.stat.exists and npm_check.rc == 0
-      environment:
-        PATH: "/usr/bin:/usr/local/bin:{{ ansible_env.PATH }}"
+- name: Checkout directory missing
+  ansible.builtin.fail:
+    msg: "The React frontend checkout directory is missing after build"
+  when: lc_directory.stat.exists and not checkout_directory.stat.exists
 
-    - name: Clean up node_modules directory
-      ansible.builtin.file:
-        path: "{{ project_root }}/current/web/lc/node_modules"
-        state: absent
-      when: lc_directory.stat.exists and npm_check.rc == 0
+- name: Ensure lc directory exists on server
+  file:
+    path: "{{ deploy_helper.new_release_path }}/web/lc"
+    state: directory
+    mode: '0755'
+  when: lc_directory.stat.exists and checkout_directory.stat.exists
+
+- name: Copy built React frontend to server
+  synchronize:
+    src: "{{ project_local_path }}/web/lc/checkout/"
+    dest: "{{ deploy_helper.new_release_path }}/web/lc/checkout"
+    group: no
+    owner: no
+    rsync_opts: --chmod=Du=rwx,--chmod=Dg=rx,--chmod=Do=rx,--chmod=Fu=rw,--chmod=Fg=r,--chmod=Fo=r
+  when: lc_directory.stat.exists and checkout_directory.stat.exists
