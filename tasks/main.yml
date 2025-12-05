@@ -8,7 +8,7 @@
 - name: Set allowed environment variables
   set_fact:
     allowed_env_vars:
-      - RECAPTCHA_SITE_KEY
+      - recaptcha_site_key
       
 - name: Create .env file with filtered environment variables
   copy:
