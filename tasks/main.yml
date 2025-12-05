@@ -5,11 +5,18 @@
   delegate_to: localhost
   register: lc_directory
 
-- name: Create .env file with all site environment variables
+- name: Set allowed environment variables
+  set_fact:
+    allowed_env_vars:
+      - RECAPTCHA_SECRET_KEY
+      
+- name: Create .env file with filtered environment variables
   copy:
     content: |
-      {% for key, value in site_env.items() %}
-      {{ key | upper }}="{{ value }}"
+      {% for key in allowed_env_vars %}
+      {% if site_env[key] is defined %}
+      VITE_{{ key | upper }}="{{ site_env[key] }}"
+      {% endif %}
       {% endfor %}
     dest: "{{ project_local_path }}/web/lc/.env"
   delegate_to: localhost
