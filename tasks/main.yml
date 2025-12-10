@@ -9,6 +9,33 @@
   set_fact:
     allowed_env_vars:
       - recaptcha_site_key
+      - turnstile_site_key
+      - authorize_net_cad_client_secret
+      - authorize_net_cad_login_id
+      - authorize_net_usd_client_secret
+      - authorize_net_usd_login_id
+      - authorize_net_test_cad_client_secret
+      - authorize_net_test_cad_login_id
+      - authorize_net_test_usd_client_secret
+      - authorize_net_test_usd_login_id
+      - authorize_net_client_secret
+      - authorize_net_login_id
+      - authorize_net_test_client_secret
+      - authorize_net_test_login_id
+      - stripe_usd_publishable_key
+      - stripe_cad_publishable_key
+      - stripe_aud_publishable_key
+      - stripe_gbp_publishable_key
+      - stripe_eur_publishable_key
+      - stripe_test_usd_publishable_key
+      - stripe_test_cad_publishable_key
+      - stripe_test_aud_publishable_key
+      - stripe_test_gbp_publishable_key
+      - stripe_test_eur_publishable_key
+      - stripe_publishable_key
+      - stripe_test_publishable_key
+      - daf_chariot_cid
+      - daf_chariot_sandbox_cid
       
 - name: Create .env file with filtered environment variables
   copy:
