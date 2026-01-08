@@ -40,6 +40,10 @@
       - banquest_test_public_key
       - paypal_client_id
       - paypal_test_client_id
+      - paypal_usd_client_id
+      - paypal_usd_test_client_id
+      - paypal_cad_client_id
+      - paypal_cad_test_client_id
 - name: Create .env file with filtered environment variables
   copy:
     content: |
