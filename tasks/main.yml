@@ -38,6 +38,8 @@
       - daf_chariot_sandbox_cid
       - banquest_public_key
       - banquest_test_public_key
+      - paypal_client_id
+      - paypal_test_client_id
 - name: Create .env file with filtered environment variables
   copy:
     content: |
