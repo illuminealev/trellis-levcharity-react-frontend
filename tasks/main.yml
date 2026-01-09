@@ -48,6 +48,10 @@
       - sumit_company_id
       - sumit_test_public_key
       - sumit_test_company_id
+      - tranzila_test_public_key
+      - tranzila_test_terminal_name
+      - tranzila_public_key
+      - tranzila_terminal_name
 - name: Create .env file with filtered environment variables
   copy:
     content: |
