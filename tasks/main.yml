@@ -10,17 +10,17 @@
     allowed_env_vars:
       - recaptcha_site_key
       - turnstile_site_key
-      - authorize_net_cad_client_secret
+      - authorize_net_cad_client_key
       - authorize_net_cad_login_id
-      - authorize_net_usd_client_secret
+      - authorize_net_usd_client_key
       - authorize_net_usd_login_id
-      - authorize_net_test_cad_client_secret
+      - authorize_net_test_cad_client_key
       - authorize_net_test_cad_login_id
-      - authorize_net_test_usd_client_secret
+      - authorize_net_test_usd_client_key
       - authorize_net_test_usd_login_id
-      - authorize_net_client_secret
+      - authorize_net_client_key
       - authorize_net_login_id
-      - authorize_net_test_client_secret
+      - authorize_net_test_client_key
       - authorize_net_test_login_id
       - stripe_usd_publishable_key
       - stripe_cad_publishable_key
